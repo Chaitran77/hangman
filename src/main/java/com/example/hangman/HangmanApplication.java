@@ -80,12 +80,12 @@ public class HangmanApplication extends Application {
 			this.width = width;
 
 			// min-width must be set, else label won't appear.
-			setStyle("-fx-min-width: " + this.width + "; -fx-border-width: 0 0 3px 0; -fx-border-color: black; -fx-font-size: " + this.width + "px;");
-
+			setStyle("-fx-min-width: " + this.width + "; -fx-border-width: 0 0 7px 0; -fx-border-color: black; -fx-font-size: " + this.width + "px;");
+			setAlignment(Pos.CENTER);
 		}
 
 		public void setLetter(char letter) {
-			setText(String.valueOf(letter));
+			setText(String.valueOf(letter).toUpperCase());
 		}
 	}
 
@@ -108,7 +108,7 @@ public class HangmanApplication extends Application {
 		wordLetterLabelsContainer.getChildren().addAll(createHSpacer(), createHSpacer());
 
 		for (int i=0; i< wordLetterLabels.length; i++) {
-			wordLetterLabels[i] = new LetterLabel(40);
+			wordLetterLabels[i] = new LetterLabel(75);
 			wordLetterLabelsContainer.getChildren().addAll(wordLetterLabels[i], createHSpacer());
 		}
 
