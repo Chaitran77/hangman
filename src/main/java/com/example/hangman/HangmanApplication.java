@@ -14,6 +14,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import javafx.scene.media.AudioClip;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -50,8 +51,11 @@ public class HangmanApplication extends Application {
 	private LetterLabel[] wordLetterLabels;
 	private Image hangmanImageData;
 
+	private final AudioClip correctSound = new AudioClip(getClass().getResource("correct.wav").toExternalForm());
+	private final AudioClip wrongSound = new AudioClip(getClass().getResource("wrong.wav").toExternalForm());
+
 	EventHandler<KeyEvent> keypressListener;
-	private int maxIncorrectGuesses = 6;
+	private final int maxIncorrectGuesses = 6;
 
 	public HangmanApplication() throws URISyntaxException {
 	}
@@ -128,7 +132,7 @@ public class HangmanApplication extends Application {
 		wordLetterLabelsContainer.getChildren().addAll(createHSpacer());
 
 		// setup event listeners
-		keypressListener = new EventHandler<KeyEvent>() {
+		keypressListener = new EventHandler<>() {
 			@Override
 			public void handle(KeyEvent event) {
 				if (event.getCode().isLetterKey()) {
@@ -144,6 +148,7 @@ public class HangmanApplication extends Application {
 								letterFound = true;
 								System.out.println(Arrays.asList(guessedLetters).contains(null));
 								System.out.println(Arrays.toString(guessedLetters));
+								correctSound.play();
 
 								if (Arrays.equals(wordToGuess, guessedLetters)) {
 									System.out.println("WON");
@@ -164,6 +169,8 @@ public class HangmanApplication extends Application {
 								LetterLabel incorrectLetterLabel = new LetterLabel(30);
 								incorrectLetterLabel.setLetter(letterReceived.charAt(0));
 								incorrectGuessLabels.getChildren().add(incorrectLetterLabel);
+
+								wrongSound.play();
 
 								incorrectGuessSection.getChildren().remove(1);
 								hangmanImageData = new Image(String.valueOf(getClass().getResource("Hangman-" + incorrectGuesses + ".png")));
@@ -263,8 +270,11 @@ public class HangmanApplication extends Application {
 
 		this.chooseFileButton = new GameButton("Choose word file", "black");
 		chooseFileButton.setOnMouseClicked((EventHandler<Event>) event -> {
-			wordsFilePath = String.valueOf(new FileChooser().showOpenDialog(null));
-			filePathLabel.setText(wordsFilePath);
+			File result = new FileChooser().showOpenDialog(null);
+			if (result != null) {
+				wordsFilePath = String.valueOf(result);
+				filePathLabel.setText(wordsFilePath);
+			}
 		});
 
 		controlButtons.getChildren().addAll(createHSpacer(), startButton, createHSpacer(), createHSpacer(), chooseFileButton, createHSpacer());
@@ -309,8 +319,10 @@ public class HangmanApplication extends Application {
 				createVSpacer(),
 				createVSpacer()
 		);
+		StackPane pane = new StackPane(rootLayout);
+		pane.setStyle("-fx-background-color: #FFF;");
 
-		Scene scene = new Scene(new StackPane(rootLayout), 1440, 945);
+		Scene scene = new Scene(pane, 1440, 945);
 		stage.setTitle("Hangman!");
 		stage.setScene(scene);
 
