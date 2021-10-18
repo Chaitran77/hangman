@@ -3,22 +3,32 @@ package com.example.hangman;
 import javafx.application.Application;
 import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 
 import java.io.*;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Stream;
 
@@ -33,7 +43,7 @@ public class HangmanApplication extends Application {
 	private Label instructionLabel;
 	private HBox incorrectGuessSection;
 
-	private String wordsFilePath = String.valueOf(getClass().getResource("words.txt"));
+	private String wordsFilePath = new File(getClass().getResource("words.txt").toURI()).getAbsolutePath();
 	private HBox incorrectGuessLabels;
 	private ImageView currentHangmanImage;
 
@@ -41,7 +51,17 @@ public class HangmanApplication extends Application {
 	private char[] guessedLetters = null;
 	private char[] incorrectlyGuessedLetters = null;
 
+	private int incorrectGuesses = 0;
+
 	private LetterLabel[] wordLetterLabels;
+
+	private Image hangmanImageData;
+
+	EventHandler keypressListener;
+
+	public HangmanApplication() throws URISyntaxException {
+	}
+
 
 	private Node createHSpacer() {
 		final Region spacer = new Region();
@@ -76,7 +96,7 @@ public class HangmanApplication extends Application {
 
 		public LetterLabel(int width) {
 			// one of these objects per letter in the chosen word.
-			// therefore starts off as a blank line
+			// therefore, starts off as a blank line
 			this.width = width;
 
 			// min-width must be set, else label won't appear.
@@ -89,7 +109,6 @@ public class HangmanApplication extends Application {
 		}
 	}
 
-
 	public void startGame(Scene scene) throws IOException {
 		// disable buttons
 		startButton.setDisable(true);
@@ -97,7 +116,7 @@ public class HangmanApplication extends Application {
 
 		// pick a word from the file
 		String[] allWords = Files.readString(Path.of(wordsFilePath)).split("\n");
-		wordToGuess = allWords[random.nextInt(allWords.length)].toCharArray();
+		wordToGuess = allWords[random.nextInt(allWords.length)].trim().toCharArray();
 		System.out.println(new String(wordToGuess));
 
 		guessedLetters = new char[wordToGuess.length];
@@ -115,7 +134,7 @@ public class HangmanApplication extends Application {
 		wordLetterLabelsContainer.getChildren().addAll(createHSpacer());
 
 		// setup event listeners
-		scene.setOnKeyPressed(new EventHandler<>() {
+		keypressListener = new EventHandler<KeyEvent>() {
 			@Override
 			public void handle(KeyEvent event) {
 				if (event.getCode().isLetterKey()) {
@@ -129,21 +148,78 @@ public class HangmanApplication extends Application {
 								guessedLetters[i] = wordToGuess[i];
 								wordLetterLabels[i].setLetter(wordToGuess[i]);
 								letterFound = true;
+								System.out.println(Arrays.asList(guessedLetters).contains(null));
+								System.out.println(Arrays.toString(guessedLetters));
+
+								if (Arrays.equals(wordToGuess, guessedLetters)) {
+									System.out.println("WON");
+									try {
+										winGame(scene);
+									} catch (IOException e) {
+										e.printStackTrace();
+									}
+								}
 							}
 						}
 						if (!letterFound) {
 							incorrectlyGuessedLetters[0] = letterReceived.charAt(0);
 							// advance the hangman bit of the game
+							incorrectGuesses++;
+							try {
+								hangmanImageData = new Image(new File(getClass().getResource("Hangman-" + incorrectGuesses + ".png").toURI()).getAbsolutePath());
+							} catch (URISyntaxException e) {
+								e.printStackTrace();
+							}
+
+							currentHangmanImage.setImage(hangmanImageData);
 						}
 					}
 				}
 			}
-		});
+		};
+
+		scene.setOnKeyPressed(keypressListener);
 
 		// reveal game elements
 		wordLetterLabelsContainer.setVisible(true);
 		instructionLabel.setVisible(true);
 		incorrectGuessSection.setVisible(true);
+	}
+
+	public void winGame(Scene scene) throws IOException {
+
+		Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+				"Congratulations - you won!\nWould you like to play again?",
+				ButtonType.OK,
+				ButtonType.CANCEL);
+		alert.setTitle("You won!");
+		Optional<ButtonType> result = alert.showAndWait();
+
+		if (result.get() == ButtonType.OK) {
+			cleanup();
+			startGame(scene);
+		} else {
+			startButton.setDisable(false);
+			chooseFileButton.setDisable(false);
+
+			// disable key listener
+			scene.removeEventHandler(KeyEvent.KEY_PRESSED, keypressListener);
+		}
+	}
+
+	public void cleanup() {
+
+		incorrectGuessLabels.getChildren().clear();
+		currentHangmanImage = new ImageView(String.valueOf(getClass().getResource("Hangman-0.png")));;
+
+		incorrectGuesses = 0;
+
+		wordToGuess = null;
+		guessedLetters = null;
+		incorrectlyGuessedLetters = null;
+
+		wordLetterLabels = null;
+		wordLetterLabelsContainer.getChildren().clear();
 	}
 
 	@Override
@@ -154,7 +230,7 @@ public class HangmanApplication extends Application {
 
 		HBox controlButtons = new HBox();
 
-		this.startButton = new GameButton("Start game   ▶️ ", "green");
+		this.startButton = new GameButton("Start game   ▶", "green");
 
 		this.chooseFileButton = new GameButton("Choose word file", "black");
 		chooseFileButton.setOnMouseClicked((EventHandler<Event>) event -> {
@@ -175,7 +251,8 @@ public class HangmanApplication extends Application {
 
 
 		this.incorrectGuessLabels = new HBox();
-		this.currentHangmanImage = new ImageView(String.valueOf(getClass().getResource("Hangman-0.png")));
+		hangmanImageData = new Image(String.valueOf(getClass().getResource("Hangman-0.png")));
+		this.currentHangmanImage = new ImageView(hangmanImageData);
 
 
 		this.incorrectGuessSection = new HBox(
@@ -202,12 +279,13 @@ public class HangmanApplication extends Application {
 				createVSpacer()
 		);
 
-		Scene scene = new Scene(new StackPane(rootLayout), 2560, 1680);
+		Scene scene = new Scene(new StackPane(rootLayout), 1440, 945);
 		stage.setTitle("Hangman!");
 		stage.setScene(scene);
 
 		startButton.setOnMouseClicked((EventHandler<Event>) event -> {
 			try {
+				cleanup();
 				startGame(scene);
 			} catch (IOException e) {
 				e.printStackTrace();
