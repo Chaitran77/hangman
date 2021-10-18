@@ -3,10 +3,8 @@ package com.example.hangman;
 import javafx.application.Application;
 import javafx.event.Event;
 import javafx.event.EventHandler;
-import javafx.event.EventType;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -16,21 +14,17 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
-import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.Window;
 
 import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Random;
-import java.util.stream.Stream;
 
 public class HangmanApplication extends Application {
 
@@ -49,15 +43,15 @@ public class HangmanApplication extends Application {
 
 	private char[] wordToGuess = null;
 	private char[] guessedLetters = null;
-	private char[] incorrectlyGuessedLetters = null;
+	private ArrayList<Character> incorrectlyGuessedLetters;
 
 	private int incorrectGuesses = 0;
 
 	private LetterLabel[] wordLetterLabels;
-
 	private Image hangmanImageData;
 
-	EventHandler keypressListener;
+	EventHandler<KeyEvent> keypressListener;
+	private int maxIncorrectGuesses = 6;
 
 	public HangmanApplication() throws URISyntaxException {
 	}
@@ -120,7 +114,7 @@ public class HangmanApplication extends Application {
 		System.out.println(new String(wordToGuess));
 
 		guessedLetters = new char[wordToGuess.length];
-		incorrectlyGuessedLetters = new char[26- wordToGuess.length];
+		incorrectlyGuessedLetters = new ArrayList<>();
 
 		// generate the letter labels
 		wordLetterLabels = new LetterLabel[wordToGuess.length];
@@ -140,7 +134,7 @@ public class HangmanApplication extends Application {
 				if (event.getCode().isLetterKey()) {
 					String letterReceived = event.getText();
 					System.out.println(letterReceived);
-					if (!(new String(guessedLetters).contains(letterReceived)) && !(new String(incorrectlyGuessedLetters).contains(letterReceived))) {
+					if (!(new String(guessedLetters).contains(letterReceived)) && !(incorrectlyGuessedLetters.contains(letterReceived.charAt(0)))) {
 						// letter hasn't been guessed
 						boolean letterFound = false;
 						for (int i=0; i<wordToGuess.length; i++) {
@@ -162,16 +156,26 @@ public class HangmanApplication extends Application {
 							}
 						}
 						if (!letterFound) {
-							incorrectlyGuessedLetters[0] = letterReceived.charAt(0);
+							incorrectlyGuessedLetters.add(letterReceived.charAt(0));
 							// advance the hangman bit of the game
 							incorrectGuesses++;
-							try {
-								hangmanImageData = new Image(new File(getClass().getResource("Hangman-" + incorrectGuesses + ".png").toURI()).getAbsolutePath());
-							} catch (URISyntaxException e) {
-								e.printStackTrace();
-							}
 
-							currentHangmanImage.setImage(hangmanImageData);
+							if (incorrectGuesses <= maxIncorrectGuesses) {
+								LetterLabel incorrectLetterLabel = new LetterLabel(30);
+								incorrectLetterLabel.setLetter(letterReceived.charAt(0));
+								incorrectGuessLabels.getChildren().add(incorrectLetterLabel);
+
+								incorrectGuessSection.getChildren().remove(1);
+								hangmanImageData = new Image(String.valueOf(getClass().getResource("Hangman-" + incorrectGuesses + ".png")));
+								currentHangmanImage = new ImageView(hangmanImageData);
+								incorrectGuessSection.getChildren().add(currentHangmanImage);
+							} else {
+								try {
+									loseGame(scene);
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+							}
 						}
 					}
 				}
@@ -207,10 +211,31 @@ public class HangmanApplication extends Application {
 		}
 	}
 
+	public void loseGame(Scene scene) throws IOException {
+
+		Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+				"You unfortunately lost :( Better luck next time!\nWould you like to play again?",
+				ButtonType.OK,
+				ButtonType.CANCEL);
+		alert.setTitle("You Lost :(");
+		Optional<ButtonType> result = alert.showAndWait();
+
+		if (result.get() == ButtonType.OK) {
+			cleanup();
+			startGame(scene);
+		} else {
+			startButton.setDisable(false);
+			chooseFileButton.setDisable(false);
+
+			// disable key listener
+			scene.removeEventHandler(KeyEvent.KEY_PRESSED, keypressListener);
+		}
+	}
+
 	public void cleanup() {
 
 		incorrectGuessLabels.getChildren().clear();
-		currentHangmanImage = new ImageView(String.valueOf(getClass().getResource("Hangman-0.png")));;
+		currentHangmanImage = new ImageView(String.valueOf(getClass().getResource("Hangman-0.png")));
 
 		incorrectGuesses = 0;
 
@@ -254,12 +279,14 @@ public class HangmanApplication extends Application {
 		hangmanImageData = new Image(String.valueOf(getClass().getResource("Hangman-0.png")));
 		this.currentHangmanImage = new ImageView(hangmanImageData);
 
+		VBox incorrectGuessesBox = new VBox(
+				new GameLabel("Incorrectly guessed letters: "),
+				this.incorrectGuessLabels
+		);
+		incorrectGuessesBox.setAlignment(Pos.BOTTOM_LEFT);
 
 		this.incorrectGuessSection = new HBox(
-				new VBox(
-						new GameLabel("Incorrectly guessed letters: "),
-						this.incorrectGuessLabels
-				),
+				incorrectGuessesBox,
 				this.currentHangmanImage
 		);
 		incorrectGuessSection.setAlignment(Pos.CENTER);
