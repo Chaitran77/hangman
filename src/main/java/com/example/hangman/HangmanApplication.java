@@ -235,7 +235,11 @@ public class HangmanApplication extends Application {
 	public void cleanup() {
 
 		incorrectGuessLabels.getChildren().clear();
-		currentHangmanImage = new ImageView(String.valueOf(getClass().getResource("Hangman-0.png")));
+
+		incorrectGuessSection.getChildren().remove(1);
+		hangmanImageData = new Image(String.valueOf(getClass().getResource("Hangman-0.png")));
+		currentHangmanImage = new ImageView(hangmanImageData);
+		incorrectGuessSection.getChildren().add(currentHangmanImage);
 
 		incorrectGuesses = 0;
 
