@@ -308,6 +308,7 @@ public class HangmanApplication extends Application {
 
 		rootLayout.getChildren().addAll(createVSpacer(),
 				controlButtons,
+				createVSpacer(),
 				filePathLabel,
 				createVSpacer(),
 				createVSpacer(),
@@ -320,7 +321,7 @@ public class HangmanApplication extends Application {
 				createVSpacer()
 		);
 		StackPane pane = new StackPane(rootLayout);
-		pane.setStyle("-fx-background-color: #FFF;");
+		pane.setStyle("-fx-background-color: linear-gradient(to top, rgb(255,0,0) 0%, rgba(255,224,0) 75%, rgba(255,255,255) 100%);");
 
 		Scene scene = new Scene(pane, 1440, 945);
 		stage.setTitle("Hangman!");
