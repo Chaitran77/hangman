@@ -199,8 +199,10 @@ public class HangmanApplication extends Application {
 
 	public void winGame(Scene scene) throws IOException {
 
+		String wordToGuessString = new String(wordToGuess);
+
 		Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-				"Congratulations - you won!\nWould you like to play again?",
+				"Congratulations - you won!\nThe word was " + wordToGuessString.toUpperCase() + ".\nWould you like to play again?",
 				ButtonType.OK,
 				ButtonType.CANCEL);
 		alert.setTitle("You won!");
@@ -220,8 +222,10 @@ public class HangmanApplication extends Application {
 
 	public void loseGame(Scene scene) throws IOException {
 
+		String wordToGuessString = new String(wordToGuess);
+
 		Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-				"You unfortunately lost :( Better luck next time!\nWould you like to play again?",
+				"You unfortunately lost :(\nThe word was " + wordToGuessString.toUpperCase() + ".\nBetter luck next time!\nWould you like to play again?",
 				ButtonType.OK,
 				ButtonType.CANCEL);
 		alert.setTitle("You Lost :(");
