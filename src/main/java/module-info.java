@@ -4,7 +4,7 @@ module com.example.hangman {
 	requires org.controlsfx.controls;
 	requires org.kordamp.bootstrapfx.core;
 	requires javafx.graphics;
-	requires javafx.media;
+//	requires javafx.media;
 
 	exports com.example.hangman;
 }

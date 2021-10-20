@@ -14,7 +14,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
-import javafx.scene.media.AudioClip;
+//import javafx.scene.media.AudioClip;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -51,8 +51,8 @@ public class HangmanApplication extends Application {
 	private LetterLabel[] wordLetterLabels;
 	private Image hangmanImageData;
 
-	private final AudioClip correctSound = new AudioClip(getClass().getResource("correct.wav").toExternalForm());
-	private final AudioClip wrongSound = new AudioClip(getClass().getResource("wrong.wav").toExternalForm());
+//	private final AudioClip correctSound = new AudioClip(getClass().getResource("correct.wav").toExternalForm());
+//	private final AudioClip wrongSound = new AudioClip(getClass().getResource("wrong.wav").toExternalForm());
 
 	EventHandler<KeyEvent> keypressListener;
 	private final int maxIncorrectGuesses = 6;
@@ -148,7 +148,7 @@ public class HangmanApplication extends Application {
 								letterFound = true;
 								System.out.println(Arrays.asList(guessedLetters).contains(null));
 								System.out.println(Arrays.toString(guessedLetters));
-								correctSound.play();
+//								correctSound.play();
 
 								if (Arrays.equals(wordToGuess, guessedLetters)) {
 									System.out.println("WON");
@@ -170,7 +170,7 @@ public class HangmanApplication extends Application {
 								incorrectLetterLabel.setLetter(letterReceived.charAt(0));
 								incorrectGuessLabels.getChildren().add(incorrectLetterLabel);
 
-								wrongSound.play();
+//								wrongSound.play();
 
 								incorrectGuessSection.getChildren().remove(1);
 								hangmanImageData = new Image(String.valueOf(getClass().getResource("Hangman-" + incorrectGuesses + ".png")));
@@ -203,12 +203,12 @@ public class HangmanApplication extends Application {
 
 		Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
 				"Congratulations - you won!\nThe word was " + wordToGuessString.toUpperCase() + ".\nWould you like to play again?",
-				ButtonType.OK,
-				ButtonType.CANCEL);
+				ButtonType.YES,
+				ButtonType.NO);
 		alert.setTitle("You won!");
 		Optional<ButtonType> result = alert.showAndWait();
 
-		if (result.get() == ButtonType.OK) {
+		if (result.get() == ButtonType.YES) {
 			cleanup();
 			startGame(scene);
 		} else {
@@ -226,12 +226,12 @@ public class HangmanApplication extends Application {
 
 		Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
 				"You unfortunately lost :(\nThe word was " + wordToGuessString.toUpperCase() + ".\nBetter luck next time!\nWould you like to play again?",
-				ButtonType.OK,
-				ButtonType.CANCEL);
+				ButtonType.YES,
+				ButtonType.NO);
 		alert.setTitle("You Lost :(");
 		Optional<ButtonType> result = alert.showAndWait();
 
-		if (result.get() == ButtonType.OK) {
+		if (result.get() == ButtonType.YES) {
 			cleanup();
 			startGame(scene);
 		} else {
