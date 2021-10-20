@@ -14,7 +14,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
-//import javafx.scene.media.AudioClip;
+import javafx.scene.media.AudioClip;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -51,8 +51,8 @@ public class HangmanApplication extends Application {
 	private LetterLabel[] wordLetterLabels;
 	private Image hangmanImageData;
 
-//	private final AudioClip correctSound = new AudioClip(getClass().getResource("correct.wav").toExternalForm());
-//	private final AudioClip wrongSound = new AudioClip(getClass().getResource("wrong.wav").toExternalForm());
+	private final AudioClip correctSound = new AudioClip(getClass().getResource("correct.wav").toExternalForm());
+	private final AudioClip wrongSound = new AudioClip(getClass().getResource("wrong.wav").toExternalForm());
 
 	EventHandler<KeyEvent> keypressListener;
 	private final int maxIncorrectGuesses = 6;
@@ -148,7 +148,7 @@ public class HangmanApplication extends Application {
 								letterFound = true;
 								System.out.println(Arrays.asList(guessedLetters).contains(null));
 								System.out.println(Arrays.toString(guessedLetters));
-//								correctSound.play();
+								correctSound.play();
 
 								if (Arrays.equals(wordToGuess, guessedLetters)) {
 									System.out.println("WON");
@@ -170,12 +170,12 @@ public class HangmanApplication extends Application {
 								incorrectLetterLabel.setLetter(letterReceived.charAt(0));
 								incorrectGuessLabels.getChildren().add(incorrectLetterLabel);
 
-//								wrongSound.play();
+								wrongSound.play();
 
-								incorrectGuessSection.getChildren().remove(1);
+								incorrectGuessSection.getChildren().remove(3);
 								hangmanImageData = new Image(String.valueOf(getClass().getResource("Hangman-" + incorrectGuesses + ".png")));
 								currentHangmanImage = new ImageView(hangmanImageData);
-								incorrectGuessSection.getChildren().add(currentHangmanImage);
+								incorrectGuessSection.getChildren().add(3, currentHangmanImage);
 							} else {
 								try {
 									loseGame(scene);
@@ -203,8 +203,8 @@ public class HangmanApplication extends Application {
 
 		Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
 				"Congratulations - you won!\nThe word was " + wordToGuessString.toUpperCase() + ".\nWould you like to play again?",
-				ButtonType.YES,
-				ButtonType.NO);
+				ButtonType.NO,
+				ButtonType.YES);
 		alert.setTitle("You won!");
 		Optional<ButtonType> result = alert.showAndWait();
 
@@ -226,8 +226,8 @@ public class HangmanApplication extends Application {
 
 		Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
 				"You unfortunately lost :(\nThe word was " + wordToGuessString.toUpperCase() + ".\nBetter luck next time!\nWould you like to play again?",
-				ButtonType.YES,
-				ButtonType.NO);
+				ButtonType.NO,
+				ButtonType.YES);
 		alert.setTitle("You Lost :(");
 		Optional<ButtonType> result = alert.showAndWait();
 
@@ -247,10 +247,10 @@ public class HangmanApplication extends Application {
 
 		incorrectGuessLabels.getChildren().clear();
 
-		incorrectGuessSection.getChildren().remove(1);
+		incorrectGuessSection.getChildren().remove(3);
 		hangmanImageData = new Image(String.valueOf(getClass().getResource("Hangman-0.png")));
 		currentHangmanImage = new ImageView(hangmanImageData);
-		incorrectGuessSection.getChildren().add(currentHangmanImage);
+		incorrectGuessSection.getChildren().add(3, currentHangmanImage);
 
 		incorrectGuesses = 0;
 
@@ -299,13 +299,17 @@ public class HangmanApplication extends Application {
 
 		VBox incorrectGuessesBox = new VBox(
 				new GameLabel("Incorrectly guessed letters: "),
-				this.incorrectGuessLabels
+				this.incorrectGuessLabels,
+				createVSpacer()
 		);
 		incorrectGuessesBox.setAlignment(Pos.BOTTOM_LEFT);
 
 		this.incorrectGuessSection = new HBox(
+				createHSpacer(),
 				incorrectGuessesBox,
-				this.currentHangmanImage
+				createHSpacer(),
+				this.currentHangmanImage,
+				createHSpacer()
 		);
 		incorrectGuessSection.setAlignment(Pos.CENTER);
 		incorrectGuessSection.setVisible(false);
@@ -325,9 +329,9 @@ public class HangmanApplication extends Application {
 				createVSpacer()
 		);
 		StackPane pane = new StackPane(rootLayout);
-		pane.setStyle("-fx-background-color: linear-gradient(to top left, #ff9f00 0%, rgba(255,224,0) 75%, rgba(255,255,255) 100%);");
+		pane.setStyle("-fx-background-color: linear-gradient(to top left, rgba(150,150,255) 10%, rgba(255,224,0) 50%, rgba(150,255,150) 100%);");
 
-		Scene scene = new Scene(pane, 1440, 945);
+		Scene scene = new Scene(pane, 1500, 945);
 		stage.setTitle("Hangman!");
 		stage.setScene(scene);
 
