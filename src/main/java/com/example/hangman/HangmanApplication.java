@@ -14,14 +14,12 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
-import javafx.scene.media.AudioClip;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
@@ -38,7 +36,13 @@ public class HangmanApplication extends Application {
 	private Label instructionLabel;
 	private HBox incorrectGuessSection;
 
-	private String wordsFilePath = new File(getClass().getResource("words.txt").toURI()).getAbsolutePath();
+	private String wordsFileResName = "words.txt";
+	private String correctSoundFileResName = "correct.wav";
+	private String wrongSoundFileResName = "wrong.wav";
+
+	private InputStream wordsFileStream = getClass().getResourceAsStream(wordsFileResName);
+	private boolean externalWordsFile = false;
+
 	private HBox incorrectGuessLabels;
 	private ImageView currentHangmanImage;
 
@@ -51,13 +55,27 @@ public class HangmanApplication extends Application {
 	private LetterLabel[] wordLetterLabels;
 	private Image hangmanImageData;
 
-	private final AudioClip correctSound = new AudioClip(getClass().getResource("correct.wav").toExternalForm());
-	private final AudioClip wrongSound = new AudioClip(getClass().getResource("wrong.wav").toExternalForm());
+//	private final AudioClip correctSound = new AudioClip(getClass().getResource(correctSoundFileResName).toExternalForm());
+//	private final AudioClip wrongSound = new AudioClip(getClass().getResource(wrongSoundFileResName).toExternalForm());
 
 	EventHandler<KeyEvent> keypressListener;
 	private final int maxIncorrectGuesses = 6;
 
-	public HangmanApplication() throws URISyntaxException {
+
+	private String readFromInputStream(InputStream inputStream)
+			throws IOException {
+		StringBuilder resultStringBuilder = new StringBuilder();
+		try (BufferedReader br
+					 = new BufferedReader(new InputStreamReader(inputStream))) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				resultStringBuilder.append(line).append("\n");
+			}
+		}
+		// vvery important - allows IS to be read again
+//		inputStream.mark(0);
+//		inputStream.reset();
+		return resultStringBuilder.toString();
 	}
 
 
@@ -113,9 +131,17 @@ public class HangmanApplication extends Application {
 		chooseFileButton.setDisable(true);
 
 		// pick a word from the file
-		String[] allWords = Files.readString(Path.of(wordsFilePath)).split("\n");
+		String[] allWords = readFromInputStream(wordsFileStream).split("\n");
 		wordToGuess = allWords[random.nextInt(allWords.length)].trim().toCharArray();
 		System.out.println(new String(wordToGuess));
+
+		// VERY IMPORTANT TO RECREATE I.S.!
+		if (!externalWordsFile) {
+			wordsFileStream = getClass().getResourceAsStream(wordsFileResName);
+		} else {
+			wordsFileStream = new FileInputStream(wordsFileResName);
+		}
+
 
 		guessedLetters = new char[wordToGuess.length];
 		incorrectlyGuessedLetters = new ArrayList<>();
@@ -148,7 +174,7 @@ public class HangmanApplication extends Application {
 								letterFound = true;
 								System.out.println(Arrays.asList(guessedLetters).contains(null));
 								System.out.println(Arrays.toString(guessedLetters));
-								correctSound.play();
+//								correctSound.play();
 
 								if (Arrays.equals(wordToGuess, guessedLetters)) {
 									System.out.println("WON");
@@ -170,7 +196,7 @@ public class HangmanApplication extends Application {
 								incorrectLetterLabel.setLetter(letterReceived.charAt(0));
 								incorrectGuessLabels.getChildren().add(incorrectLetterLabel);
 
-								wrongSound.play();
+//								wrongSound.play();
 
 								incorrectGuessSection.getChildren().remove(3);
 								hangmanImageData = new Image(String.valueOf(getClass().getResource("Hangman-" + incorrectGuesses + ".png")));
@@ -201,7 +227,7 @@ public class HangmanApplication extends Application {
 
 		String wordToGuessString = new String(wordToGuess);
 
-		Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+		Alert alert = new Alert(Alert.AlertType.NONE,
 				"Congratulations - you won!\nThe word was " + wordToGuessString.toUpperCase() + ".\nWould you like to play again?",
 				ButtonType.NO,
 				ButtonType.YES);
@@ -224,7 +250,7 @@ public class HangmanApplication extends Application {
 
 		String wordToGuessString = new String(wordToGuess);
 
-		Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+		Alert alert = new Alert(Alert.AlertType.NONE,
 				"You unfortunately lost :(\nThe word was " + wordToGuessString.toUpperCase() + ".\nBetter luck next time!\nWould you like to play again?",
 				ButtonType.NO,
 				ButtonType.YES);
@@ -276,14 +302,22 @@ public class HangmanApplication extends Application {
 		chooseFileButton.setOnMouseClicked((EventHandler<Event>) event -> {
 			File result = new FileChooser().showOpenDialog(null);
 			if (result != null) {
-				wordsFilePath = String.valueOf(result);
-				filePathLabel.setText(wordsFilePath);
+				wordsFileResName = String.valueOf(result);
+				filePathLabel.setText(wordsFileResName);
+				// VERY IMPORTANT TO RECREATE I.S.!
+				try {
+					wordsFileStream = new FileInputStream(wordsFileResName);
+					externalWordsFile = true;
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
 			}
 		});
 
 		controlButtons.getChildren().addAll(createHSpacer(), startButton, createHSpacer(), createHSpacer(), chooseFileButton, createHSpacer());
 
-		this.filePathLabel = new Label(wordsFilePath); // empty to begin with, set when the file chooser dialog returns
+		this.filePathLabel = new Label("words.txt"); // empty to begin with, set when the file chooser dialog returns
+
 
 		this.wordLetterLabelsContainer = new HBox();
 		wordLetterLabelsContainer.setAlignment(Pos.CENTER);
