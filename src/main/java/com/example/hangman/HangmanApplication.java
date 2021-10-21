@@ -14,16 +14,14 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import javax.sound.sampled.*;
+
 import java.io.*;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 public class HangmanApplication extends Application {
 
@@ -78,6 +76,13 @@ public class HangmanApplication extends Application {
 		return resultStringBuilder.toString();
 	}
 
+	private void playSound(String path) throws UnsupportedAudioFileException, IOException, LineUnavailableException {
+		Clip clip = AudioSystem.getClip();
+		AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(Objects.requireNonNull(getClass().getResource(path)));
+		clip.open(audioInputStream);
+		clip.start();
+	}
+
 
 	private Node createHSpacer() {
 		final Region spacer = new Region();
@@ -109,6 +114,7 @@ public class HangmanApplication extends Application {
 
 	public class LetterLabel extends Label {
 		private final int width;
+		private char labelLetter = '0'; // letter not guessed yet
 
 		public LetterLabel(int width) {
 			// one of these objects per letter in the chosen word.
@@ -122,6 +128,15 @@ public class HangmanApplication extends Application {
 
 		public void setLetter(char letter) {
 			setText(String.valueOf(letter).toUpperCase());
+			this.labelLetter = letter;
+		}
+
+		public void setGreen() {
+			setTextFill(Color.color(0,0.9,0));
+		}
+
+		public void setRed() {
+			setTextFill(Color.RED);
 		}
 	}
 
@@ -172,9 +187,14 @@ public class HangmanApplication extends Application {
 								guessedLetters[i] = wordToGuess[i];
 								wordLetterLabels[i].setLetter(wordToGuess[i]);
 								letterFound = true;
-								System.out.println(Arrays.asList(guessedLetters).contains(null));
+								System.out.println(Objects.equals(guessedLetters, null));
 								System.out.println(Arrays.toString(guessedLetters));
 //								correctSound.play();
+								try {
+									playSound(correctSoundFileResName);
+								} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+									e.printStackTrace();
+								}
 
 								if (Arrays.equals(wordToGuess, guessedLetters)) {
 									System.out.println("WON");
@@ -194,9 +214,15 @@ public class HangmanApplication extends Application {
 							if (incorrectGuesses <= maxIncorrectGuesses) {
 								LetterLabel incorrectLetterLabel = new LetterLabel(30);
 								incorrectLetterLabel.setLetter(letterReceived.charAt(0));
+								incorrectLetterLabel.setRed();
 								incorrectGuessLabels.getChildren().add(incorrectLetterLabel);
 
 //								wrongSound.play();
+								try {
+									playSound(wrongSoundFileResName);
+								} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+									e.printStackTrace();
+								}
 
 								incorrectGuessSection.getChildren().remove(3);
 								hangmanImageData = new Image(String.valueOf(getClass().getResource("Hangman-" + incorrectGuesses + ".png")));
@@ -225,6 +251,10 @@ public class HangmanApplication extends Application {
 
 	public void winGame(Scene scene) throws IOException {
 
+		for (LetterLabel letterLabel: wordLetterLabels) {
+			letterLabel.setGreen();
+		}
+
 		String wordToGuessString = new String(wordToGuess);
 
 		Alert alert = new Alert(Alert.AlertType.NONE,
@@ -247,6 +277,16 @@ public class HangmanApplication extends Application {
 	}
 
 	public void loseGame(Scene scene) throws IOException {
+
+		for (int letter = 0; letter < wordToGuess.length; letter++) {
+			if (wordLetterLabels[letter].labelLetter != '0') {
+				wordLetterLabels[letter].setGreen();
+			} else {
+				// '0' therefore letter not guessed
+				wordLetterLabels[letter].setLetter(wordToGuess[letter]);
+				wordLetterLabels[letter].setRed();
+			}
+		}
 
 		String wordToGuessString = new String(wordToGuess);
 
