@@ -5,6 +5,7 @@ module com.example.hangman {
 	requires org.kordamp.bootstrapfx.core;
 	requires javafx.graphics;
 	requires javafx.media;
+	requires java.desktop;
 //	requires javafx.media;
 
 	exports com.example.hangman;
